@@ -212,7 +212,9 @@ class _MultiPageFormState extends State<MultiPageForm> {
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
-                                      builder: (context) => HomePage()),
+                                      builder: (context) => HomePage(
+                                            currentpage: 0,
+                                          )),
                                 );
                               }
                             : () {},

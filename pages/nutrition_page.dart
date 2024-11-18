@@ -1,5 +1,3 @@
-// ignore_for_file: prefer_const_constructors, prefer_const_literals_to_create_immutables
-
 import 'dart:io';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -57,6 +55,17 @@ class _NutritionPageState extends State<NutritionPage> {
                     if (dailyIntakeSnapshot.connectionState ==
                         ConnectionState.waiting) {
                       return CircularProgressIndicator();
+                    } else if (dailyIntakeSnapshot.hasError) {
+                      return Center(
+                          child: Text(
+                              'Error: ${dailyIntakeSnapshot.error}')); // Error message
+                    } else if (!dailyIntakeSnapshot.hasData ||
+                        dailyIntakeSnapshot.data!.isEmpty) {
+                      return Center(
+                          child: Text(
+                        'No workout data found.',
+                        style: TextStyle(color: Colors.white),
+                      )); // No data message
                     }
                     Map<String, dynamic> dailyIntake =
                         dailyIntakeSnapshot.data!;

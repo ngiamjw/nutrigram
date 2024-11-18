@@ -1,6 +1,14 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
+import 'package:nutrigram/database/firebase_workout.dart';
+import 'package:nutrigram/pages/home_page.dart';
+import 'package:nutrigram/pages/workout_page.dart';
 import 'package:nutrigram/theme/app_color.dart';
+import 'package:nutrigram/workout_pages/workout_container.dart';
+import 'package:nutrigram/workout_pages/workout_data.dart';
 import 'package:nutrigram/workout_pages/workout_detail.dart';
+// Import your WorkoutData class
+import 'dart:async';
 
 class AddWorkoutPage extends StatefulWidget {
   const AddWorkoutPage({super.key});
@@ -10,6 +18,70 @@ class AddWorkoutPage extends StatefulWidget {
 }
 
 class _AddWorkoutPageState extends State<AddWorkoutPage> {
+  late Timer _timer;
+  Duration _duration = Duration(seconds: 0);
+  WorkoutData _workout = WorkoutData();
+  firestoreServiceWorkout firestoreservice = firestoreServiceWorkout();
+  @override
+  void initState() {
+    super.initState();
+    _startTimer();
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(Duration(seconds: 1), (timer) {
+      setState(() {
+        _duration = Duration(seconds: _duration.inSeconds + 1);
+      });
+    });
+  }
+
+  void _addSet(int exerciseIndex) {
+    setState(() {
+      _workout.exercises[exerciseIndex].addSet();
+      _workout.updateTotalSets(); // Update the total sets after adding a set
+    });
+  }
+
+  void _addExercise() {
+    setState(() {
+      _workout.addExercise(ExerciseData(
+          exerciseName: 'Pull Up',
+          sets: [WorkoutSet(setNumber: 1), WorkoutSet(setNumber: 2)]));
+    });
+  }
+
+  void _removeSet(int exerciseIndex, int setIndex) {
+    setState(() {
+      _workout.exercises[exerciseIndex].removeSet(setIndex);
+      _workout.updateTotalSets(); // Update the total set count after removal
+      print('Set $setIndex removed from exercise $exerciseIndex');
+      print(
+          '${_workout.exercises[exerciseIndex].sets.length}'); // Debug statement
+    });
+  }
+
+  void _discardWorkout() {
+    setState(() {
+      _workout.clearWorkout();
+      _duration = Duration(seconds: 0);
+    });
+  }
+
+  @override
+  void dispose() {
+    _timer.cancel();
+    super.dispose();
+  }
+
+  String _formattedDuration() {
+    final minutes =
+        _duration.inMinutes.remainder(60).toString().padLeft(2, '0');
+    final seconds =
+        _duration.inSeconds.remainder(60).toString().padLeft(2, '0');
+    return "$minutes min $seconds s";
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -22,19 +94,32 @@ class _AddWorkoutPageState extends State<AddWorkoutPage> {
           },
         ),
         actions: [
-          Padding(
-            padding: const EdgeInsets.only(right: 16),
-            child: Container(
-              width: 80,
-              height: 40,
-              decoration: BoxDecoration(
-                  color: Colors.blue.shade600,
-                  borderRadius: BorderRadius.circular(8)),
-              child: Center(
-                  child: Text(
-                "Finish",
-                style: TextStyle(fontSize: 20, color: Colors.white),
-              )),
+          GestureDetector(
+            onTap: () {
+              // Finish action here
+              firestoreservice.uploadWorkoutData('ngiamjw@gmail.com', _workout,
+                  DateFormat('ddMMyyyy').format(DateTime.now()));
+
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                    builder: (context) => HomePage(currentpage: 1)),
+              );
+            },
+            child: Padding(
+              padding: const EdgeInsets.only(right: 16),
+              child: Container(
+                width: 80,
+                height: 40,
+                decoration: BoxDecoration(
+                    color: Colors.blue.shade600,
+                    borderRadius: BorderRadius.circular(8)),
+                child: Center(
+                    child: Text(
+                  "Finish",
+                  style: TextStyle(fontSize: 20, color: Colors.white),
+                )),
+              ),
             ),
           )
         ],
@@ -46,9 +131,9 @@ class _AddWorkoutPageState extends State<AddWorkoutPage> {
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column(
+        child: ListView(
           children: [
-            // First Box
+            // First Box for Duration, Volume, Sets, Records
             Container(
               padding: EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -58,163 +143,42 @@ class _AddWorkoutPageState extends State<AddWorkoutPage> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  SizedBox(
-                    height: 8,
-                  ),
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      WorkoutDetail(title: 'Duration', value: '1h 35min'),
-                      WorkoutDetail(title: 'Volume', value: '5,745 kg'),
-                      WorkoutDetail(title: 'Sets', value: '10'),
+                      WorkoutDetail(
+                          title: 'Duration', value: _formattedDuration()),
+                      WorkoutDetail(
+                          title: 'Volume',
+                          value: '0 kg'), // Volume will be left blank for now
+                      WorkoutDetail(
+                          title: 'Sets', value: '${_workout.totalSets}'),
                       WorkoutDetail(
                           title: 'Records',
                           value: '1',
-                          icon: Icons.emoji_events),
-                    ],
-                  ),
-                  SizedBox(
-                    height: 8,
-                  ),
-                ],
-              ),
-            ),
-            SizedBox(
-              height: 16,
-            ),
-            Container(
-              padding: EdgeInsets.all(16),
-              decoration: BoxDecoration(
-                color: Color(0xFF2C2C2E),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  SizedBox(
-                    height: 8,
-                  ),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          CircleAvatar(
-                            backgroundImage: AssetImage(
-                                'assets/pull_up.png'), // Replace with the actual image
-                            radius: 24,
-                          ),
-                          SizedBox(width: 10),
-                          Text(
-                            'Pull Up',
-                            style: TextStyle(
-                                color: Colors.blue,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold),
-                          ),
-                          Spacer(),
-                          Icon(Icons.more_vert, color: Colors.white, size: 30),
-                        ],
-                      ),
-                      SizedBox(height: 10),
-                      Text(
-                        'Add notes here...',
-                        style: TextStyle(color: Colors.grey, fontSize: 16),
-                      ),
-                      SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Icon(Icons.timer, color: Colors.blue, size: 18),
-                          SizedBox(width: 8),
-                          Text('Rest Timer: OFF',
-                              style:
-                                  TextStyle(color: Colors.blue, fontSize: 16)),
-                        ],
-                      ),
-                      SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text('SET',
-                                style: TextStyle(
-                                    color: Colors.grey, fontSize: 16)),
-                          ),
-                          Expanded(
-                            child: Text('PREVIOUS',
-                                style: TextStyle(
-                                    color: Colors.grey, fontSize: 16)),
-                          ),
-                          Expanded(
-                            child: Text('REPS',
-                                style: TextStyle(
-                                    color: Colors.grey, fontSize: 16)),
-                          ),
-                          SizedBox(width: 32), // Space for the check mark icon
-                        ],
-                      ),
-                      Divider(color: Colors.grey.shade800),
-                      // Example Set 1
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text('1',
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 16)),
-                          ),
-                          Expanded(
-                            child: Text('x 12',
-                                style: TextStyle(
-                                    color: Colors.grey, fontSize: 16)),
-                          ),
-                          Expanded(
-                            child: Text('12',
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 16)),
-                          ),
-                          Icon(Icons.check_box, color: Colors.grey, size: 24),
-                        ],
-                      ),
-                      Divider(color: Colors.grey.shade800),
-                      // Example Set 2
-                      Row(
-                        children: [
-                          Expanded(
-                            child: Text('2',
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 16)),
-                          ),
-                          Expanded(
-                            child: Text('x 8',
-                                style: TextStyle(
-                                    color: Colors.grey, fontSize: 16)),
-                          ),
-                          Expanded(
-                            child: Text('8',
-                                style: TextStyle(
-                                    color: Colors.white, fontSize: 16)),
-                          ),
-                          Icon(Icons.check_box, color: Colors.grey, size: 24),
-                        ],
-                      ),
-                      SizedBox(height: 16),
-                      ElevatedButton.icon(
-                        onPressed: () {},
-                        icon: Icon(Icons.add, color: Colors.white),
-                        label: Text('Add Set',
-                            style: TextStyle(color: Colors.white)),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.grey.shade800,
-                          minimumSize: Size(double.infinity, 50),
-                        ),
-                      ),
+                          icon: Icons.emoji_events), // Records left blank
                     ],
                   ),
                 ],
               ),
             ),
             SizedBox(height: 16),
+
+            // List of workouts
+            for (int i = 0; i < _workout.exercises.length; i++) ...[
+              buildWorkoutContainer(
+                context: context,
+                workoutData: _workout.exercises[i],
+                index: i,
+                onAddSet: _addSet,
+                removeSet: _removeSet,
+              ),
+              SizedBox(height: 16),
+            ],
+
+            // Add Exercise Button
             ElevatedButton.icon(
-              onPressed: () {},
+              onPressed: _addExercise,
               icon: Icon(Icons.add, color: Colors.white),
               label:
                   Text('Add Exercise', style: TextStyle(color: Colors.white)),
@@ -224,6 +188,8 @@ class _AddWorkoutPageState extends State<AddWorkoutPage> {
               ),
             ),
             SizedBox(height: 16),
+
+            // Settings and Discard Workout Buttons
             Row(
               children: [
                 Expanded(
@@ -240,7 +206,7 @@ class _AddWorkoutPageState extends State<AddWorkoutPage> {
                 SizedBox(width: 16),
                 Expanded(
                   child: ElevatedButton(
-                    onPressed: () {},
+                    onPressed: _discardWorkout,
                     child: Text('Discard Workout',
                         style: TextStyle(color: Colors.white)),
                     style: ElevatedButton.styleFrom(

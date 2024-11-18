@@ -188,7 +188,10 @@ class ImageDetailsPage extends StatelessWidget {
 
                         Navigator.push(
                           context,
-                          MaterialPageRoute(builder: (context) => HomePage()),
+                          MaterialPageRoute(
+                              builder: (context) => HomePage(
+                                    currentpage: 0,
+                                  )),
                         );
                       },
                       style: ElevatedButton.styleFrom(

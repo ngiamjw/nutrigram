@@ -6,13 +6,13 @@ import 'package:nutrigram/pages/workout_page.dart';
 import 'package:nutrigram/theme/app_color.dart';
 
 class HomePage extends StatefulWidget {
+  int currentpage;
+  HomePage({super.key, required this.currentpage});
   @override
   _HomePageState createState() => _HomePageState();
 }
 
 class _HomePageState extends State<HomePage> {
-  int _currentPage = 0;
-
   final _pageController = PageController();
 
   @override
@@ -57,9 +57,11 @@ class _HomePageState extends State<HomePage> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: _currentPage == 0 ? Colors.blue : Colors.grey,
+                          color: widget.currentpage == 0
+                              ? Colors.blue
+                              : Colors.grey,
                         )),
-                    if (_currentPage == 0)
+                    if (widget.currentpage == 0)
                       Container(
                         height: 2,
                         width: 60,
@@ -77,9 +79,11 @@ class _HomePageState extends State<HomePage> {
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
-                          color: _currentPage == 1 ? Colors.blue : Colors.grey,
+                          color: widget.currentpage == 1
+                              ? Colors.blue
+                              : Colors.grey,
                         )),
-                    if (_currentPage == 1)
+                    if (widget.currentpage == 1)
                       Container(
                         height: 2,
                         width: 60,
@@ -98,7 +102,7 @@ class _HomePageState extends State<HomePage> {
               controller: _pageController,
               onPageChanged: (index) {
                 setState(() {
-                  _currentPage = index;
+                  widget.currentpage = index;
                 });
               },
               children: [
