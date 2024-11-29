@@ -21,18 +21,28 @@ class FirestoreServiceNutrition {
     });
   }
 
-  Future<void> addDailyIntake(String email, String date, int calories,
-      int protein, int carbs, int fats) {
+  Future<void> addDailyIntake(String email, String date) async {
     final dailyIntakeRef =
         nutrition.doc(email).collection('dailyIntake').doc(date);
+    final snapshot = await dailyIntakeRef.get();
 
-    return dailyIntakeRef.set({
-      'date': date,
-      'caloriesConsumed': calories,
-      'proteinConsumed': protein,
-      'carbsConsumed': carbs,
-      'fatsConsumed': fats,
-    });
+    if (!snapshot.exists) {
+      // Add daily intake if the document does not exist
+      await dailyIntakeRef.set({
+        'date': date,
+        'caloriesConsumed': 0,
+        'proteinConsumed': 0,
+        'carbsConsumed': 0,
+        'fatsConsumed': 0,
+        'fooditems': [],
+        'likes': 0,
+        'comments': [],
+      });
+
+      print("Daily intake added successfully for $date");
+    } else {
+      print("Daily intake for $date already exists. No changes made.");
+    }
   }
 
   Future<String> uploadImage(File imageFile) async {
@@ -47,6 +57,19 @@ class FirestoreServiceNutrition {
       print('Error uploading image: $e');
       return '';
     }
+  }
+
+  Future<void> addComment(
+      String email, String date, String content, String comment_email) {
+    final dailyIntakeRef =
+        nutrition.doc(email).collection('dailyIntake').doc(date);
+    Map<String, dynamic> comment = {
+      'content': content,
+      'comment_email': comment_email,
+    };
+    return dailyIntakeRef.update({
+      'comments': FieldValue.arrayUnion([comment])
+    });
   }
 
   Future<void> saveFoodItem(
@@ -64,31 +87,25 @@ class FirestoreServiceNutrition {
       int daily_fats) async {
     String imageUrl = await uploadImage(imageFile);
 
-    final foodItemsRef = nutrition
-        .doc(email)
-        .collection('dailyIntake')
-        .doc(date)
-        .collection('foodItems')
-        .doc();
+    final dailyIntakeRef =
+        nutrition.doc(email).collection('dailyIntake').doc(date);
 
-    await foodItemsRef.set({
+    Map<String, dynamic> foodItem = {
       'foodName': foodName,
       'calories': calories,
       'protein': protein,
       'carbs': carbs,
       'fats': fats,
       'imageURL': imageUrl,
-      'timestamp': FieldValue.serverTimestamp(),
-    });
-
-    final dailyIntakeRef =
-        nutrition.doc(email).collection('dailyIntake').doc(date);
+      'timestamp': Timestamp.now(),
+    };
 
     return dailyIntakeRef.update({
-      'caloriesConsumed': daily_calories,
-      'proteinConsumed': daily_protein,
-      'carbsConsumed': daily_carbs,
-      'fatsConsumed': daily_fats,
+      'caloriesConsumed': daily_calories + calories,
+      'proteinConsumed': daily_protein + protein,
+      'carbsConsumed': daily_carbs + carbs,
+      'fatsConsumed': daily_fats + fats,
+      'fooditems': FieldValue.arrayUnion([foodItem])
     });
   }
 
@@ -122,6 +139,50 @@ class FirestoreServiceNutrition {
     } catch (e) {
       print("Error retrieving daily intake: $e");
       return {};
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> getDocumentsWithFoodItems(
+      String email) async {
+    List<Map<String, dynamic>> filteredDocuments = [];
+
+    try {
+      final firestore = FirebaseFirestore.instance;
+      final dailyIntakeRef = firestore
+          .collection('nutrition')
+          .doc(email)
+          .collection('dailyIntake');
+
+      DateTime now = DateTime.now();
+
+      for (int i = 0; i < 7; i++) {
+        DateTime date = now.subtract(Duration(days: i));
+        String formattedDate = "${date.day.toString().padLeft(2, '0')}"
+            "${date.month.toString().padLeft(2, '0')}"
+            "${date.year}";
+
+        DocumentSnapshot docSnapshot =
+            await dailyIntakeRef.doc(formattedDate).get();
+
+        if (docSnapshot.exists) {
+          Map<String, dynamic> data =
+              docSnapshot.data() as Map<String, dynamic>;
+          if (data.containsKey('fooditems') &&
+              data['fooditems'] is List &&
+              (data['fooditems'] as List).isNotEmpty) {
+            // Include only documents where fooditems exist and are not empty
+            filteredDocuments.add({
+              'date': formattedDate,
+              ...data, // Spread the document's fields
+            });
+          }
+        }
+      }
+
+      return filteredDocuments;
+    } catch (e) {
+      print("Error fetching documents: $e");
+      return [];
     }
   }
 

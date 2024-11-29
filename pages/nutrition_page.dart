@@ -46,6 +46,8 @@ class _NutritionPageState extends State<NutritionPage> {
               var userData = snapshot.data!.data() as Map<String, dynamic>;
               Map<String, dynamic> recommendedNutrition =
                   userData['recommendedNutrition'];
+              firestoreService.addDailyIntake('ngiamjw@gmail.com',
+                  DateFormat('ddMMyyyy').format(DateTime.now()));
 
               return FutureBuilder<Map<String, dynamic>>(
                   future: firestoreService.getDailyIntake('ngiamjw@gmail.com',
@@ -73,6 +75,9 @@ class _NutritionPageState extends State<NutritionPage> {
                     int protein = dailyIntake['proteinConsumed'];
                     int carbs = dailyIntake['carbsConsumed'];
                     int fats = dailyIntake['fatsConsumed'];
+
+                    List<dynamic> foodItems = dailyIntake['fooditems'];
+
                     double calories_percent = (calories /
                             recommendedNutrition['recommendedCalories']) *
                         100;
@@ -110,7 +115,7 @@ class _NutritionPageState extends State<NutritionPage> {
                                             CrossAxisAlignment.start,
                                         children: [
                                           Text(
-                                              "${recommendedNutrition['recommendedCalories']}",
+                                              "${recommendedNutrition['recommendedCalories'] - calories}",
                                               style: TextStyle(
                                                   fontSize: 45,
                                                   fontWeight: FontWeight.bold,
@@ -179,7 +184,7 @@ class _NutritionPageState extends State<NutritionPage> {
                               mainAxisAlignment: MainAxisAlignment.spaceBetween,
                               children: [
                                 _buildSmallBox(
-                                  "${recommendedNutrition['recommendedProtein']}g",
+                                  "${recommendedNutrition['recommendedProtein'] - protein}g",
                                   "Protein left",
                                   protein_percent,
                                   Icon(
@@ -190,7 +195,7 @@ class _NutritionPageState extends State<NutritionPage> {
                                   ),
                                 ),
                                 _buildSmallBox(
-                                  "${recommendedNutrition['recommendedCarbs']}g",
+                                  "${recommendedNutrition['recommendedCarbs'] - carbs}g",
                                   "Carbs left",
                                   carbs_percent,
                                   Icon(
@@ -201,7 +206,7 @@ class _NutritionPageState extends State<NutritionPage> {
                                   ),
                                 ),
                                 _buildSmallBox(
-                                  "${recommendedNutrition['recommendedFats']}g",
+                                  "${recommendedNutrition['recommendedFats'] - fats}g",
                                   "Fats left",
                                   fats_percent,
                                   Icon(
@@ -226,78 +231,36 @@ class _NutritionPageState extends State<NutritionPage> {
                             ),
                             // ListView.builder for dynamic content
 
-                            FutureBuilder<List<Map<String, dynamic>>>(
-                              future: firestoreService.getFoodItems(
-                                  'ngiamjw@gmail.com',
-                                  DateFormat('ddMMyyyy')
-                                      .format(DateTime.now())),
-                              builder: (BuildContext context,
-                                  AsyncSnapshot<List<Map<String, dynamic>>>
-                                      snapshot) {
-                                if (snapshot.connectionState ==
-                                    ConnectionState.waiting) {
-                                  return Center(
-                                      child: CircularProgressIndicator());
-                                }
+                            SizedBox(
+                              height: 400,
+                              child: ListView.builder(
+                                shrinkWrap: true,
+                                physics: NeverScrollableScrollPhysics(),
+                                itemCount: foodItems.length,
+                                itemBuilder: (context, index) {
+                                  final foodItem = foodItems[index];
+                                  String foodName = foodItem['foodName'];
+                                  String imageUrl = foodItem['imageURL'];
+                                  int calories = foodItem['calories'];
+                                  int protein = foodItem['protein'];
+                                  int carbs = foodItem['carbs'];
+                                  int fats = foodItem['fats'];
+                                  Timestamp timestamp = foodItem['timestamp'];
+                                  String formattedTime = DateFormat('h:mm a')
+                                      .format(timestamp.toDate());
 
-                                if (snapshot.hasError) {
-                                  return Center(
-                                      child: Text('Error fetching food items'));
-                                }
-
-                                if (!snapshot.hasData ||
-                                    snapshot.data!.isEmpty) {
-                                  return Center(
-                                      heightFactor: 15,
-                                      child: Text(
-                                          'No food items uploaded today',
-                                          style:
-                                              TextStyle(color: Colors.white)));
-                                }
-
-                                List<Map<String, dynamic>> foodItems =
-                                    snapshot.data!;
-
-                                return Column(
-                                  children: [
-                                    SizedBox(
-                                      height: 400,
-                                      child: ListView.builder(
-                                        shrinkWrap: true,
-                                        physics: NeverScrollableScrollPhysics(),
-                                        itemCount: foodItems.length,
-                                        itemBuilder: (context, index) {
-                                          final foodItem = foodItems[index];
-                                          String foodName =
-                                              foodItem['foodName'];
-                                          String imageUrl =
-                                              foodItem['imageURL'];
-                                          int calories = foodItem['calories'];
-                                          int protein = foodItem['protein'];
-                                          int carbs = foodItem['carbs'];
-                                          int fats = foodItem['fats'];
-                                          Timestamp timestamp =
-                                              foodItem['timestamp'];
-                                          String formattedTime =
-                                              DateFormat('h:mm a')
-                                                  .format(timestamp.toDate());
-
-                                          return ShowFoodItem(
-                                            calories: calories,
-                                            carbs: carbs,
-                                            fats: fats,
-                                            foodName: foodName,
-                                            formattedTime: formattedTime,
-                                            protein: protein,
-                                            imageUrl: imageUrl,
-                                          );
-                                        },
-                                      ),
-                                    ),
-                                  ],
-                                );
-                              },
-                            )
+                                  return ShowFoodItem(
+                                    calories: calories,
+                                    carbs: carbs,
+                                    fats: fats,
+                                    foodName: foodName,
+                                    formattedTime: formattedTime,
+                                    protein: protein,
+                                    imageUrl: imageUrl,
+                                  );
+                                },
+                              ),
+                            ),
                           ],
                         ),
 

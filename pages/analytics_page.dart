@@ -1,20 +1,22 @@
+import 'package:flutter/material.dart';
+
 import 'package:curved_navigation_bar/curved_navigation_bar.dart';
 import 'package:flutter/material.dart';
-import 'package:nutrigram/pages/analytics_page.dart';
-import 'package:nutrigram/pages/discover_page.dart';
-import 'package:nutrigram/pages/image_test.dart';
+import 'package:nutrigram/pages/analytics_nutrition.dart';
+import 'package:nutrigram/pages/analytics_workout.dart';
+import 'package:nutrigram/pages/home_page.dart';
 import 'package:nutrigram/pages/nutrition_page.dart';
 import 'package:nutrigram/pages/settings_page.dart';
 import 'package:nutrigram/theme/app_color.dart';
 
-class HomePage extends StatefulWidget {
+class AnalyticsPage extends StatefulWidget {
   int currentpage;
-  HomePage({super.key, required this.currentpage});
+  AnalyticsPage({super.key, required this.currentpage});
   @override
-  _HomePageState createState() => _HomePageState();
+  _AnalyticsPageState createState() => _AnalyticsPageState();
 }
 
-class _HomePageState extends State<HomePage> {
+class _AnalyticsPageState extends State<AnalyticsPage> {
   final _pageController = PageController();
 
   @override
@@ -37,7 +39,7 @@ class _HomePageState extends State<HomePage> {
                       color: Colors.blue.shade500,
                     ), // Food logo
                     SizedBox(width: 8),
-                    Text("EAT GYM SLEEP",
+                    Text("GYM FREAK",
                         style: TextStyle(
                             fontSize: 30,
                             fontWeight: FontWeight.bold,
@@ -77,7 +79,7 @@ class _HomePageState extends State<HomePage> {
                 onTap: () => _pageController.jumpToPage(1),
                 child: Column(
                   children: [
-                    Text("Discover",
+                    Text("Workout",
                         style: TextStyle(
                           fontSize: 16,
                           fontWeight: FontWeight.bold,
@@ -108,8 +110,8 @@ class _HomePageState extends State<HomePage> {
                 });
               },
               children: [
-                NutritionPage(),
-                DiscoverPage(),
+                AnalyticsNutrition(),
+                AnalyticsWorkout(),
               ],
             ),
           ),
@@ -118,7 +120,7 @@ class _HomePageState extends State<HomePage> {
 
       // Curved Bottom Navigation Bar
       bottomNavigationBar: CurvedNavigationBar(
-        index: 0,
+        index: 1,
         backgroundColor: AppColors.charcoalGray,
         color: Color(0xFF2C2C2E),
         items: [
@@ -134,11 +136,11 @@ class _HomePageState extends State<HomePage> {
               MaterialPageRoute(builder: (context) => SettingsPage()),
             );
           }
-          if (index == 1) {
+          if (index == 0) {
             Navigator.push(
               context,
               MaterialPageRoute(
-                  builder: (context) => AnalyticsPage(
+                  builder: (context) => HomePage(
                         currentpage: 0,
                       )),
             );

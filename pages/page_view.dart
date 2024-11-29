@@ -11,7 +11,6 @@ import 'package:nutrigram/info_pages/weekly_goals.dart';
 import 'package:nutrigram/info_pages/workouts__info_page.dart';
 import 'package:nutrigram/pages/home_page.dart';
 import 'package:nutrigram/pages/nutrition_page.dart';
-import 'package:nutrigram/pages/workout_page.dart';
 import 'package:nutrigram/theme/app_color.dart';
 
 class MultiPageForm extends StatefulWidget {
@@ -202,13 +201,9 @@ class _MultiPageFormState extends State<MultiPageForm> {
                                       userData: user_data.returnUserData());
                                 }
                                 firestoreService.addDailyIntake(
-                                    'ngiamjw@gmail.com',
-                                    DateFormat('ddMMyyyy')
-                                        .format(DateTime.now()),
-                                    0,
-                                    0,
-                                    0,
-                                    0);
+                                  'ngiamjw@gmail.com',
+                                  DateFormat('ddMMyyyy').format(DateTime.now()),
+                                );
                                 Navigator.push(
                                   context,
                                   MaterialPageRoute(
